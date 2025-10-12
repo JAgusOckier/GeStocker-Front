@@ -11,9 +11,10 @@ import { toast } from "sonner";
 import { IStockProduct } from "@/types/interface";
 import Link from "next/link";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { getAllInventory } from "@/services/user/inventory";
 
 const InventoryView = () => {
-  const { inventoryId, inventories} = useBusiness();
+  const { inventoryId, inventories, setInventories} = useBusiness();
   const { token } = useAuth();
   const [products, setProducts] = useState<IStockProduct[]>([]);
   const [filters, setFilters] = useState({
@@ -46,6 +47,7 @@ const InventoryView = () => {
     };
 
     fetchProductsInventory();
+    fetchInventories()
   }, [inventoryId, token, filters, businessId]);
 
   const handleSearchChange = (value: string): void => {
@@ -53,6 +55,16 @@ const InventoryView = () => {
       };
     
   const currentInventory = inventories.find(inv => inv.id === inventoryId) || inventories[0];
+
+  const fetchInventories = async () => {
+      if (!token || !businessId) return;
+      try {
+        const inventories = await getAllInventory(token, businessId);
+        setInventories(inventories);
+      } catch (error) {
+        console.warn("No se pudo traer los Locales", error);
+      }
+    };
 
   const totalProducts = products.length;
   const outOfStockProducts = products.filter((p) => p.stock <= 0).length;
@@ -62,7 +74,7 @@ const InventoryView = () => {
 
   return (
     <div className="p-4 mr-16">
-      <section className="flex justify-between items-center mb-10">
+      <section className="flex flex-wrap gap-3 justify-between items-center mb-10">
         <div className="flex flex-col">
         <h1 className="text-4xl font-semibold text-custom-casiNegro">Inventario del {currentInventory?.name || "sin nombre"}</h1>
           <h3>Gestiona tus productos y controla tu stock</h3>
@@ -90,7 +102,7 @@ const InventoryView = () => {
           </Link>
         </div>
       </section>
-      <section className="grid grid-cols-3 gap-4 mb-6">
+      <section className="grid md:grid-cols-3 gap-4 mb-6">
         <StatCard
           title="Total de productos"
           value={totalProducts}

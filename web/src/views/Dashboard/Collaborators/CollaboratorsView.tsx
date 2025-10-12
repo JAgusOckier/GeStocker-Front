@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { routes } from "@/routes/routes";
-import { getCollaboratorsByBusiness } from "@/services/user/collaborator";
+import { desactivateCollaborator, getCollaboratorsByBusiness } from "@/services/user/collaborator";
 import { ICollaborator } from "@/types/interface";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
@@ -26,6 +26,21 @@ const CollaboratorsView = () => {
     }
   };
 
+  const desactive = async (id: string) => {
+    if (!token) return;
+    try {
+      const response = await desactivateCollaborator(token, id);
+      console.log(response);
+      if (response) {
+        toast.success("Colaborador desactivado");
+        fetchCollaborators();
+      }
+    } catch (error) {
+      console.warn(error);
+      toast.error("No se pudo desactivar al colaborador");
+    }
+  }
+
   useEffect(() => {
     const businessId = localStorage.getItem("selectedBusinessId");
     if (businessId) setBusinessId(businessId);
@@ -34,8 +49,8 @@ const CollaboratorsView = () => {
 
   return (
     <div className="p-4">
-      <div className="flex justify-between">
-        <div className="mb-8">
+      <div className="flex flex-wrap justify-between mb-8">
+        <div>
           <h1 className="text-4xl font-bold">Colaboradores</h1>
           <h2 className="text-xl text-custom-textGris">
             Gestiona los usuarios que tienen acceso al sistema
@@ -59,7 +74,7 @@ const CollaboratorsView = () => {
             className="w-full outline-none"
           />
         </div>
-        <div className="grid grid-cols-4 text-lg gap-1 text-center p-2 bg-custom-grisClarito ">
+        <div className="grid grid-cols-5 text-lg gap-1 text-center p-2 bg-custom-grisClarito ">
           <span className="text-custom-textSubtitle border-r border-custom-GrisOscuro">
             Colaborador
           </span>
@@ -70,13 +85,16 @@ const CollaboratorsView = () => {
             Estado
           </span>
           <span className="text-custom-textSubtitle">Inventario asignado</span>
+          <span className="text-custom-textSubtitle border-r border-custom-GrisOscuro">
+            Acciones
+          </span>
         </div>
         {collaborators.length > 0 ? (
           collaborators.map((c) => {
             return (
               <div
                 key={c.id}
-                className="grid grid-cols-4 text-lg gap-1 text-center p-4"
+                className="grid grid-cols-5 text-lg gap-1 text-center p-4"
               >
                 <span>{c.username}</span>
                 <span>{c.email}</span>
@@ -88,6 +106,9 @@ const CollaboratorsView = () => {
                   {c.isActive ? "Activo" : "Inactivo"}
                 </span>
                 <span>{c.inventory.name}</span>
+                <span className="flex gap-2 justify-center">
+                    <Button onClick={() => desactive(c.id)} variant="destructive">Desactivar</Button>
+                </span>
               </div>
             );
           })
